@@ -48,25 +48,21 @@ if __name__ == '__main__':
     # Gather data about folder structure and file creation times.
     DATA = []
     for root, dirs, files in walk( OLD ):
-        if 'iPhoto Library' not in root:
-            for name in files:
-                row = {}
-                row['path'] = root
-                row['name'] = name
-                filename = join(root, name)
-                ext = splitext( name )[1].lower()    
-                row['ext'] = ext
-                if ext in ['.jpg', '.jpeg', '.png', '.tiff']:
-                    info = get_exif( filename )
-                    # Get creation time from EXIF data or from OS.
-                    if 'DateTimeOriginal' in info.keys():
-                        row['DateTimeOriginal'] = info['DateTimeOriginal']
-                    if 'DateTime' in info.keys():
-                        row['DateTime'] = info['DateTime']
-                    row['ctime'] = get_creation_time( filename )
-                else:
-                    row['ctime'] = get_creation_time( filename )
-                DATA.append( row )
+        for name in files:
+            row = {}
+            row['path'] = root
+            row['name'] = name
+            filename = join(root, name)
+            ext = splitext( name )[1].lower()    
+            row['ext'] = ext
+            info = get_exif( filename )
+            # Get creation time from EXIF data or from OS.
+            if 'DateTimeOriginal' in info.keys():
+                row['DateTimeOriginal'] = info['DateTimeOriginal']
+            if 'DateTime' in info.keys():
+                row['DateTime'] = info['DateTime']
+            row['ctime'] = get_creation_time( filename ).strftime('%Y:%m:%d %H:%M:%S')
+            DATA.append( row )
 
     # Write out report.
     HEADERS = [ 'path', 'name', 'ext', 'DateTimeOriginal', 'DateTime', 'ctime' ]
