@@ -7,6 +7,7 @@ from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
 from subprocess import Popen, PIPE
+from csv import DictWriter
 
 def get_creation_time(path):
     """Get the creation time of a file, uses stat on unix."""
@@ -43,27 +44,33 @@ if __name__ == '__main__':
     OLD = argv[1]
 
     print 'Scanning ' + OLD 
-    NOINFO = 0
-    WITHINFO = 0
+
+    # Gather data about folder structure and file creation times.
+    DATA = []
     for root, dirs, files in walk( OLD ):
         if 'iPhoto Library' not in root:
             for name in files:
+                row = {}
+                row['path'] = root
+                row['name'] = name
                 filename = join(root, name)
-                if isfile( filename ):
-                    ext = splitext( name )[1].lower()    
-                    if ext in ['.jpg', '.jpeg', '.png', '.tiff']:
-                        info = get_exif( filename )
-                        # Get creation time from EXIF data or from OS.
-                        if 'DateTimeOrginal' in info.keys():
-                            WITHINFO += 1
-                        elif 'DateTime' in info.keys():
-                            #print filename
-                            #print info['DateTime']
-                            WITHINFO += 1
-                        else:
-                            print filename
-                            print get_creation_time( filename )
-                            NOINFO += 1
-    print WITHINFO
-    print NOINFO
+                ext = splitext( name )[1].lower()    
+                row['ext'] = ext
+                if ext in ['.jpg', '.jpeg', '.png', '.tiff']:
+                    info = get_exif( filename )
+                    # Get creation time from EXIF data or from OS.
+                    if 'DateTimeOriginal' in info.keys():
+                        row['DateTimeOriginal'] = info['DateTimeOriginal']
+                    if 'DateTime' in info.keys():
+                        row['DateTime'] = info['DateTime']
+                    row['ctime'] = get_creation_time( filename )
+                else:
+                    row['ctime'] = get_creation_time( filename )
+                DATA.append( row )
 
+    # Write out report.
+    HEADERS = [ 'path', 'name', 'ext', 'DateTimeOriginal', 'DateTime', 'ctime' ]
+    writer = DictWriter( open('report.csv', 'wb'), HEADERS )
+    writer.writeheader()
+    for row in DATA:
+        writer.writerow( row )
