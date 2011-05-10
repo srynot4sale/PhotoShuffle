@@ -1,13 +1,14 @@
 """Scans a folder and builds a sorted structure based on image creation time."""
 
 from os import walk, name as osname
-from os.path import splitext, getctime, join, isfile
+from os.path import splitext, getctime, join as joinpath, isfile, exists
 from sys import argv
 from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
 from subprocess import Popen, PIPE
 from csv import DictWriter
+from shutil import copyfile
 
 def get_creation_time(path):
     """Get the creation time of a file, uses stat on unix."""
@@ -42,31 +43,45 @@ def get_exif(path):
 
 if __name__ == '__main__':
     OLD = argv[1]
-
-    print 'Scanning ' + OLD 
+    NEW = argv[2]
 
     # Gather data about folder structure and file creation times.
+    print 'Scanning ' + OLD 
     DATA = []
-    for root, dirs, files in walk( OLD ):
+    for path, dirs, files in walk( OLD ):
         for name in files:
             row = {}
-            row['path'] = root
-            row['name'] = name
-            filename = join(root, name)
-            ext = splitext( name )[1].lower()    
-            row['ext'] = ext
+            row['path'] = path
+            row['name'] = splitext( name )[0]
+            row['ext'] = splitext( name )[1].lower()    
+            filename = joinpath(path, name)
             info = get_exif( filename )
             # Get creation time from EXIF data or from OS.
+            # datetime precidence is DateTimeOriginal > DateTime > ctime.
             if 'DateTimeOriginal' in info.keys():
-                row['DateTimeOriginal'] = info['DateTimeOriginal']
-            if 'DateTime' in info.keys():
-                row['DateTime'] = info['DateTime']
-            row['ctime'] = get_creation_time( filename ).strftime('%Y:%m:%d %H:%M:%S')
+                row['datetime'] = info['DateTimeOriginal']
+            if 'DateTime' in info.keys() and 'datetime' not in row.keys():
+                row['datetime'] = info['DateTime']
+            if 'datetime' not in row.keys():
+                ctime = get_creation_time( filename )
+                row['datetime'] = ctime.strftime('%Y:%m:%d %H:%M:%S')
+            # Generate new path using filetime.
+            filetime = datetime.strptime(row['datetime'],'%Y:%m:%d %H:%M:%S')
+            row['newpath'] = joinpath( NEW, filetime.strftime('%Y/%b/%d') )
+            row['newname'] = filetime.strftime('%H_%M_%S')
             DATA.append( row )
 
     # Write out report.
-    HEADERS = [ 'path', 'name', 'ext', 'DateTimeOriginal', 'DateTime', 'ctime' ]
+    print 'Writing report.csv'
+    HEADERS = [ 'path', 'name', 'ext', 'datetime', 'newpath','newname' ]
     writer = DictWriter( open('report.csv', 'wb'), HEADERS )
     writer.writeheader()
     for row in DATA:
         writer.writerow( row )
+
+    # Copy the files to new locations.
+    print 'Copying files.'
+    for row in DATA:
+        oldfile = joinpath( row['path'], row['name'] )
+        newfile = joinpath( row['newpath'], row['newname'] + row['ext'] )
+        #copyfile( oldfile, newfile )
