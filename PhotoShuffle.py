@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     # Generate filenames per directory: 1 to n+1 (zero padded) with DDMMMYY.
     print 'Generating filenames.'
-    for NEW_PATHdir in set( [ i['newpath'] for i in DATA ] ):
-        files = [ r for r in DATA if r['newpath'] == NEW_PATHdir ]
+    for newdir in set( [ i['newpath'] for i in DATA ] ):
+        files = [ r for r in DATA if r['newpath'] == newdir ]
         for i in range( len(files) ):
             datestr = files[i]['ftime'].strftime('%d%b%Y')
             pad = len( str( len(files) ) )
