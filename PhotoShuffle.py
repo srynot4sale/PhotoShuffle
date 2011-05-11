@@ -1,7 +1,7 @@
 """Scans a folder and builds a sorted structure based on image creation time."""
 
 from os import walk, name as osname
-from os.path import splitext, getctime, join as joinpath, isfile, exists
+from os.path import splitext, getctime, join as joinpath  
 from sys import argv
 from datetime import datetime
 from PIL import Image
@@ -10,13 +10,13 @@ from subprocess import Popen, PIPE
 from csv import DictWriter
 from shutil import copyfile
 
-def get_creation_time(path):
+def get_creation_time(fname):
     """Get the creation time of a file, uses stat on unix."""
     timestamp = 0
     if osname != 'posix':
-        timestamp = getctime( path )
+        timestamp = getctime( fname )
     else:
-        process = Popen(['stat', '-f%B', path],
+        process = Popen(['stat', '-f%B', fname],
             stdout=PIPE, stderr=PIPE)
         if process.wait():
             raise OSError(process.stderr.read().rstrip())
@@ -24,28 +24,26 @@ def get_creation_time(path):
             timestamp = int(process.stdout.read())
     return datetime.fromtimestamp( timestamp ) 
 
-def get_exif(path):
+def get_exif(fname):
     """Get embedded EXIF data from image file."""
     ret = {}
     try:
-        img = Image.open(path)
+        img = Image.open(fname)
         if hasattr( img, '_getexif' ):
             exifinfo = img._getexif()
             if exifinfo != None:
                 for tag, value in exifinfo.items():
                     decoded = TAGS.get(tag, tag)
                     ret[decoded] = value
-        else:
-            print 'NO EXIF ' + path
     except IOError:
-        print 'IOERROR ' + path
+        print 'IOERROR ' + fname
     return ret
 
 if __name__ == '__main__':
     OLD = argv[1]
     NEW = argv[2]
 
-    # Gather data about folder structure and file creation times.
+    # Gather data about folder structure and file creation date.
     print 'Scanning ' + OLD 
     DATA = []
     for path, dirs, files in walk( OLD ):
@@ -65,23 +63,29 @@ if __name__ == '__main__':
             if 'datetime' not in row.keys():
                 ctime = get_creation_time( filename )
                 row['datetime'] = ctime.strftime('%Y:%m:%d %H:%M:%S')
-            # Generate new path using filetime.
+            # Generate new path using date.
             filetime = datetime.strptime(row['datetime'],'%Y:%m:%d %H:%M:%S')
             row['newpath'] = joinpath( NEW, filetime.strftime('%Y/%b/%d') )
-            row['newname'] = filetime.strftime('%H_%M_%S')
             DATA.append( row )
+
+    # Generate filenames: 1 to n+1.
+    print 'Generating filenames.'
+    for newdir in set( [ i['newpath'] for i in DATA ] ):
+        files = [ row for row in DATA if row['newpath'] == newdir ]
+        for i in range(len(files)):
+            files[i]['newname'] = '%d' % (i+1)
 
     # Write out report.
     print 'Writing report.csv'
     HEADERS = [ 'path', 'name', 'ext', 'datetime', 'newpath','newname' ]
-    writer = DictWriter( open('report.csv', 'wb'), HEADERS )
-    writer.writeheader()
+    WRITER = DictWriter( open('report.csv', 'wb'), HEADERS )
+    WRITER.writeheader()
     for row in DATA:
-        writer.writerow( row )
+        WRITER.writerow( row )
 
     # Copy the files to new locations.
     print 'Copying files.'
     for row in DATA:
         oldfile = joinpath( row['path'], row['name'] )
         newfile = joinpath( row['newpath'], row['newname'] + row['ext'] )
-        #copyfile( oldfile, newfile )
+        copyfile( oldfile, newfile )
