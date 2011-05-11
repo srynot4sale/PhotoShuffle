@@ -1,7 +1,7 @@
 """Scans a folder and builds a sorted structure based on image creation time."""
 
-from os import walk, name as osname
-from os.path import splitext, getctime, join as joinpath  
+from os import walk, name as osname, makedirs
+from os.path import splitext, getctime, join as joinpath, exists  
 from sys import argv
 from datetime import datetime
 from PIL import Image
@@ -68,12 +68,12 @@ if __name__ == '__main__':
             row['newpath'] = joinpath( NEW, filetime.strftime('%Y/%b/%d') )
             DATA.append( row )
 
-    # Generate filenames: 1 to n+1.
+    # Generate filenames: 1 to n+1 (zero padded).
     print 'Generating filenames.'
     for newdir in set( [ i['newpath'] for i in DATA ] ):
         files = [ row for row in DATA if row['newpath'] == newdir ]
         for i in range(len(files)):
-            files[i]['newname'] = '%d' % (i+1)
+            files[i]['newname'] = '%0*d' % (len(str(len(files))), i+1)
 
     # Write out report.
     print 'Writing report.csv'
@@ -86,6 +86,9 @@ if __name__ == '__main__':
     # Copy the files to new locations.
     print 'Copying files.'
     for row in DATA:
-        oldfile = joinpath( row['path'], row['name'] )
+        oldfile = joinpath( row['path'], row['name'] + row['ext'] )
         newfile = joinpath( row['newpath'], row['newname'] + row['ext'] )
+        print newfile
+        if not exists( row['newpath'] ):
+            makedirs( row['newpath'] )
         copyfile( oldfile, newfile )
