@@ -1,4 +1,4 @@
-"""Scans a folder and builds a sorted structure based on image creation time."""
+"""Scans a folder and builds a date sorted tree based on image creation time."""
 
 from os import walk, name as osname, makedirs
 from os.path import splitext, getctime, join as joinpath, exists  
@@ -24,7 +24,7 @@ def get_creation_time(fname):
             timestamp = int(process.stdout.read())
     return datetime.fromtimestamp( timestamp ) 
 
-def get_exif(fname):
+def get_exif_data(fname):
     """Get embedded EXIF data from image file."""
     ret = {}
     try:
@@ -40,55 +40,57 @@ def get_exif(fname):
     return ret
 
 if __name__ == '__main__':
-    OLD = argv[1]
-    NEW = argv[2]
+    ORIG_PATH = argv[1]
+    NEW_PATH = argv[2]
 
-    # Gather data about folder structure and file creation date.
-    print 'Scanning ' + OLD 
+    # Get creation time from EXIF data or from file system.
+    print 'Scanning ' + ORIG_PATH 
     DATA = []
-    for path, dirs, files in walk( OLD ):
+    for path, dirs, files in walk( ORIG_PATH ):
         for name in files:
-            row = {}
-            row['path'] = path
-            row['name'] = splitext( name )[0]
-            row['ext'] = splitext( name )[1].lower()    
+            r = {}
+            r['path'] = path
+            r['name'] = splitext( name )[0]
+            r['ext'] = splitext( name )[1].lower()    
             filename = joinpath(path, name)
-            info = get_exif( filename )
-            # Get creation time from EXIF data or from OS.
-            # datetime precidence is DateTimeOriginal > DateTime > ctime.
+            info = get_exif_data( filename )
+            # precidence is DateTimeOriginal > DateTime > ctime.
             if 'DateTimeOriginal' in info.keys():
-                row['datetime'] = info['DateTimeOriginal']
-            if 'DateTime' in info.keys() and 'datetime' not in row.keys():
-                row['datetime'] = info['DateTime']
-            if 'datetime' not in row.keys():
+                r['ftime'] = info['DateTimeOriginal']
+            if 'DateTime' in info.keys() and 'ftime' not in r.keys():
+                r['ftime'] = info['DateTime']
+            if 'ftime' not in r.keys():
                 ctime = get_creation_time( filename )
-                row['datetime'] = ctime.strftime('%Y:%m:%d %H:%M:%S')
+                r['ftime'] = ctime.strftime('%Y:%m:%d %H:%M:%S')
+            r['ftime'] = datetime.strptime(r['ftime'],'%Y:%m:%d %H:%M:%S')
             # Generate new path using date.
-            filetime = datetime.strptime(row['datetime'],'%Y:%m:%d %H:%M:%S')
-            row['newpath'] = joinpath( NEW, filetime.strftime('%Y/%b/%d') )
-            DATA.append( row )
+            r['newpath'] = joinpath( NEW_PATH, r['ftime'].strftime('%Y/%b/%d') )
+            DATA.append( r )
 
-    # Generate filenames: 1 to n+1 (zero padded).
+    # Generate filenames per directory: 1 to n+1 (zero padded) with DDMMMYY.
     print 'Generating filenames.'
-    for newdir in set( [ i['newpath'] for i in DATA ] ):
-        files = [ row for row in DATA if row['newpath'] == newdir ]
-        for i in range(len(files)):
-            files[i]['newname'] = '%0*d' % (len(str(len(files))), i+1)
+    for NEW_PATHdir in set( [ i['newpath'] for i in DATA ] ):
+        files = [ r for r in DATA if r['newpath'] == NEW_PATHdir ]
+        for i in range( len(files) ):
+            datestr = files[i]['ftime'].strftime('%d%b%Y')
+            pad = len( str( len(files) ) )
+            files[i]['newname'] = '%0*d_%s' % (pad, i+1, datestr)
 
-    # Write out report.
+    # Write out CSV format report for debugging.
     print 'Writing report.csv'
-    HEADERS = [ 'path', 'name', 'ext', 'datetime', 'newpath','newname' ]
+    HEADERS = [ 'path', 'name', 'ext', 'ftime', 'newpath','newname' ]
     WRITER = DictWriter( open('report.csv', 'wb'), HEADERS )
     WRITER.writeheader()
-    for row in DATA:
-        WRITER.writerow( row )
+    for r in DATA:
+        WRITER.writerow( r )
 
-    # Copy the files to new locations.
+    # Copy the files to their new locations, creating directories as requried.
     print 'Copying files.'
-    for row in DATA:
-        oldfile = joinpath( row['path'], row['name'] + row['ext'] )
-        newfile = joinpath( row['newpath'], row['newname'] + row['ext'] )
-        print newfile
-        if not exists( row['newpath'] ):
-            makedirs( row['newpath'] )
-        copyfile( oldfile, newfile )
+    for r in DATA:
+        origfile = joinpath( r['path'], r['name'] + r['ext'] )
+        newfile = joinpath( r['newpath'], r['newname'] + r['ext'] )
+        if not exists( r['newpath'] ):
+            makedirs( r['newpath'] )
+        print origfile +' to '+ newfile
+        copyfile( origfile, newfile )
+
