@@ -1,28 +1,13 @@
 """Scans a folder and builds a date sorted tree based on image creation time."""
 
-from os import walk, name as osname, makedirs
-from os.path import splitext, getctime, join as joinpath, exists  
+from os import walk, makedirs
+from os.path import splitext, join as joinpath, exists  
 from sys import argv
 from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
-from subprocess import Popen, PIPE
 from csv import DictWriter
 from shutil import copyfile
-
-def get_creation_time(fname):
-    """Get the creation time of a file, uses stat on unix."""
-    timestamp = 0
-    if osname != 'posix':
-        timestamp = getctime( fname )
-    else:
-        process = Popen(['stat', '-f%B', fname],
-            stdout=PIPE, stderr=PIPE)
-        if process.wait():
-            raise OSError(process.stderr.read().rstrip())
-        else:
-            timestamp = int(process.stdout.read())
-    return datetime.fromtimestamp( timestamp ) 
 
 def get_exif_data(fname):
     """Get embedded EXIF data from image file."""
@@ -37,35 +22,36 @@ def get_exif_data(fname):
                     ret[decoded] = value
     except IOError:
         print 'IOERROR ' + fname
+        ret = None
     return ret
 
 if __name__ == '__main__':
     ORIG_PATH = argv[1]
     NEW_PATH = argv[2]
 
-    # Get creation time from EXIF data or from file system.
+    # Get creation time from EXIF data.
     print 'Scanning ' + ORIG_PATH 
     DATA = []
     for path, dirs, files in walk( ORIG_PATH ):
         for name in files:
             r = {}
             r['path'] = path
-            r['name'] = splitext( name )[0]
+            r['name'] = splitext( name )[0].lower()    
             r['ext'] = splitext( name )[1].lower()    
-            filename = joinpath(path, name)
-            info = get_exif_data( filename )
-            # precidence is DateTimeOriginal > DateTime > ctime.
-            if 'DateTimeOriginal' in info.keys():
-                r['ftime'] = info['DateTimeOriginal']
-            if 'DateTime' in info.keys() and 'ftime' not in r.keys():
-                r['ftime'] = info['DateTime']
-            if 'ftime' not in r.keys():
-                ctime = get_creation_time( filename )
-                r['ftime'] = ctime.strftime('%Y:%m:%d %H:%M:%S')
-            r['ftime'] = datetime.strptime(r['ftime'],'%Y:%m:%d %H:%M:%S')
-            # Generate new path using date.
-            r['newpath'] = joinpath( NEW_PATH, r['ftime'].strftime('%Y/%b/%d') )
-            DATA.append( r )
+            info = get_exif_data( joinpath(path, name) )
+            if info != None:
+                # precidence is DateTimeOriginal > DateTime.
+                if 'DateTimeOriginal' in info.keys():
+                    r['ftime'] = info['DateTimeOriginal']
+                elif 'DateTime' in info.keys():
+                    r['ftime'] = info['DateTime']
+            if 'ftime' in r.keys():
+                r['ftime'] = datetime.strptime(r['ftime'],'%Y:%m:%d %H:%M:%S')
+                DATA.append( r )
+
+    # Generate new path YYYY/MM/DD/ using EXIF date.
+    for r in DATA:
+        r['newpath'] = joinpath( NEW_PATH, r['ftime'].strftime('%Y/%m/%d') )
 
     # Generate filenames per directory: 1 to n+1 (zero padded) with DDMMMYY.
     print 'Generating filenames.'
@@ -89,8 +75,8 @@ if __name__ == '__main__':
     for r in DATA:
         origfile = joinpath( r['path'], r['name'] + r['ext'] )
         newfile = joinpath( r['newpath'], r['newname'] + r['ext'] )
-        if not exists( r['newpath'] ):
-            makedirs( r['newpath'] )
+#        if not exists( r['newpath'] ):
+#            makedirs( r['newpath'] )
         print origfile +' to '+ newfile
-        copyfile( origfile, newfile )
+#        copyfile( origfile, newfile )
 
