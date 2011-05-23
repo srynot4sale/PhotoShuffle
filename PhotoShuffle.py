@@ -75,8 +75,8 @@ if __name__ == '__main__':
     for r in DATA:
         origfile = joinpath( r['path'], r['name'] + r['ext'] )
         newfile = joinpath( r['newpath'], r['newname'] + r['ext'] )
-#        if not exists( r['newpath'] ):
-#            makedirs( r['newpath'] )
+        if not exists( r['newpath'] ):
+            makedirs( r['newpath'] )
         print origfile +' to '+ newfile
-#        copyfile( origfile, newfile )
+        copyfile( origfile, newfile )
 
