@@ -1,13 +1,13 @@
 """Scans a folder and builds a date sorted tree based on image creation time."""
 
-from os import walk, makedirs
+from os import walk, makedirs, rmdir, listdir
 from os.path import splitext, join as joinpath, exists  
 from sys import argv
 from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
 from csv import DictWriter
-from shutil import copyfile
+from shutil import move
 
 def get_exif_data(fname):
     """Get embedded EXIF data from image file."""
@@ -46,6 +46,7 @@ if __name__ == '__main__':
                 elif 'DateTime' in info.keys():
                     r['ftime'] = info['DateTime']
             if 'ftime' in r.keys():
+                print name
                 r['ftime'] = datetime.strptime(r['ftime'],'%Y:%m:%d %H:%M:%S')
                 DATA.append( r )
 
@@ -78,5 +79,10 @@ if __name__ == '__main__':
         if not exists( r['newpath'] ):
             makedirs( r['newpath'] )
         print origfile +' to '+ newfile
-        copyfile( origfile, newfile )
+        # move the file.
+        move( origfile, newfile )
 
+        # if the source directory is empty then delete it.
+        if len( listdir( r['path'] ) ) == 0:
+            print 'Deleting ' + r['path']
+#            rmdir( r['path'] )
