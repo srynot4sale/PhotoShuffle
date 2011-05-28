@@ -1,54 +1,37 @@
 """Scans a folder and builds a date sorted tree based on image creation time."""
 
-from os import walk, makedirs, rmdir, listdir
-from os.path import splitext, join as joinpath, exists  
+from os import makedirs, listdir, rmdir
+from os.path import join as joinpath, exists  
 from sys import argv
 from datetime import datetime
-from PIL import Image
-from PIL.ExifTags import TAGS
-from csv import DictWriter
 from shutil import move
-
-def get_exif_data(fname):
-    """Get embedded EXIF data from image file."""
-    ret = {}
-    try:
-        img = Image.open(fname)
-        if hasattr( img, '_getexif' ):
-            exifinfo = img._getexif()
-            if exifinfo != None:
-                for tag, value in exifinfo.items():
-                    decoded = TAGS.get(tag, tag)
-                    ret[decoded] = value
-    except IOError:
-        print 'IOERROR ' + fname
-        ret = None
-    return ret
+from ExifScan import scan_exif_data
 
 if __name__ == '__main__':
     ORIG_PATH = argv[1]
     NEW_PATH = argv[2]
 
+    print 'Gathering & processing EXIF data.'
+
     # Get creation time from EXIF data.
-    print 'Scanning ' + ORIG_PATH 
-    DATA = []
-    for path, dirs, files in walk( ORIG_PATH ):
-        for name in files:
-            r = {}
-            r['path'] = path
-            r['name'] = splitext( name )[0].lower()    
-            r['ext'] = splitext( name )[1].lower()    
-            info = get_exif_data( joinpath(path, name) )
-            if info != None:
-                # precidence is DateTimeOriginal > DateTime.
-                if 'DateTimeOriginal' in info.keys():
-                    r['ftime'] = info['DateTimeOriginal']
-                elif 'DateTime' in info.keys():
-                    r['ftime'] = info['DateTime']
-            if 'ftime' in r.keys():
-                print name
-                r['ftime'] = datetime.strptime(r['ftime'],'%Y:%m:%d %H:%M:%S')
-                DATA.append( r )
+    DATA = scan_exif_data( ORIG_PATH )
+
+    # Remove any files without EXIF data from list.
+    DATA = [ f for f in DATA if len(f['exif']) > 0 ]
+
+    # Process EXIF data.
+    for r in DATA:
+        info = r['exif']
+        # precidence is DateTimeOriginal > DateTime.
+        if 'DateTimeOriginal' in info.keys():
+            r['ftime'] = info['DateTimeOriginal']
+        elif 'DateTime' in info.keys():
+            r['ftime'] = info['DateTime']
+        if 'ftime' in r.keys():
+            r['ftime'] = datetime.strptime(r['ftime'],'%Y:%m:%d %H:%M:%S')
+
+    # Remove any files without datetime info.
+    DATA = [ f for f in DATA if 'ftime' in f.keys() ]
 
     # Generate new path YYYY/MM/DD/ using EXIF date.
     for r in DATA:
@@ -63,14 +46,6 @@ if __name__ == '__main__':
             pad = len( str( len(files) ) )
             files[i]['newname'] = '%0*d_%s' % (pad, i+1, datestr)
 
-    # Write out CSV format report for debugging.
-    print 'Writing report.csv'
-    HEADERS = [ 'path', 'name', 'ext', 'ftime', 'newpath','newname' ]
-    WRITER = DictWriter( open('report.csv', 'wb'), HEADERS )
-    WRITER.writeheader()
-    for r in DATA:
-        WRITER.writerow( r )
-
     # Copy the files to their new locations, creating directories as requried.
     print 'Copying files.'
     for r in DATA:
@@ -82,7 +57,11 @@ if __name__ == '__main__':
         # move the file.
         move( origfile, newfile )
 
-        # if the source directory is empty then delete it.
-        if len( listdir( r['path'] ) ) == 0:
-            print 'Deleting ' + r['path']
-#            rmdir( r['path'] )
+    print 'Removing empty directories'
+    DIRS = set( [ d['path'] for d in DATA ] )
+    for d in DIRS:
+        # if the directory is empty then delete it.
+        if len( listdir( d ) ) == 0:
+            print 'Deleting dir ' + d
+            rmdir( d )
+

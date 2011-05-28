@@ -2,3 +2,5 @@
 *.swp
 # Ignore csv files
 *.csv
+# Ignore python byte code files
+*.pyc

@@ -38,21 +38,41 @@ def scan_exif_data( root ):
 
 if __name__ == '__main__':
     from sys import argv
+    from csv import DictWriter
+    # First arg is the root of directory tree.
     ROOT = argv[1]
+    # Second arg is single EXIF column to include in CSV.
+    DATA = argv[2]
 
     print 'Scanning ' + ROOT 
-    DATA = scan_exif_data( ROOT )
+    FILES = scan_exif_data( ROOT )
 
-    EXTS = set([ r['ext'] for r in DATA ])
+    print 'Calculating stats.'
+    EXTS = set([ r['ext'] for r in FILES ])
+    print 'File\tData\tNoData'
     for ext in EXTS:
-        has_data = []
-        no_data = []
-        for f in [ f for f in DATA if f['ext'] == ext ]:
+        has_data = 0
+        no_data = 0
+        for f in [ f for f in FILES if f['ext'] == ext ]:
             if len( f['exif'] ) > 0:
-                has_data.append( f ) 
+                has_data += 1
             else:
-                no_data.append( f )
-        print '%s - %d with EXIF, %d without EXIF:' % (ext, len(has_data), len(no_data))
-        for f in no_data:
-            print '\t' + joinpath( f['path'], f['name'] + f['ext'] )
+                no_data += 1
+        print '%s\t%d\t%d' % (ext, has_data, no_data)
+
+    print 'Creating CSV report.'
+
+    # Extract keys out of sub-dictionary.
+    for f in FILES:
+        for k in f['exif'].keys():
+            f[k] = f['exif'][k]
+        del f['exif']
+
+    HEADERS = ['path', 'name', 'ext' ]
+    HEADERS.append( DATA )
+    FILE = open('report.csv', 'wb')
+    WRITER = DictWriter( FILE, HEADERS, extrasaction='ignore' )
+    WRITER.writeheader()
+    for f in FILES:
+        WRITER.writerow( f )
 
