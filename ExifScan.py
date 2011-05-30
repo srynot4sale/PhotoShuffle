@@ -40,16 +40,13 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     from csv import DictWriter
 
-    PARSER = ArgumentParser(description='Scan a fodler for files with EXIF data.')
+    PARSER = ArgumentParser(description='Scan folder for files with EXIF data.')
     PARSER.add_argument( 'root', metavar='R', help='Dir to scan.')
-    PARSER.add_argument( 'tags', metavar='T', nargs='+', help='List of EXIF tags' )
+    PARSER.add_argument( 'tags', metavar='T', nargs='+', help='EXIF tags.' )
     ARGS = PARSER.parse_args()
 
-    ROOT = ARGS.root
-    DATA = ARGS.tags
-
-    print 'Scanning ' + ROOT 
-    FILES = scan_exif_data( ROOT )
+    print 'Scanning ' + ARGS.root 
+    FILES = scan_exif_data( ARGS.root )
 
     print 'Calculating stats.'
     EXTS = set([ r['ext'] for r in FILES ])
@@ -73,7 +70,7 @@ if __name__ == '__main__':
         del f['exif']
 
     HEADERS = ['path', 'name', 'ext' ]
-    HEADERS = HEADERS + DATA 
+    HEADERS = HEADERS + ARGS.tags 
     FILE = open('report.csv', 'wb')
     WRITER = DictWriter( FILE, HEADERS, extrasaction='ignore' )
     WRITER.writeheader()
