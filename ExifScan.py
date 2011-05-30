@@ -43,26 +43,33 @@ if __name__ == '__main__':
     PARSER = ArgumentParser(description='Scan folder for files with EXIF data.')
     PARSER.add_argument( 'root', metavar='R', help='Dir to scan.')
     PARSER.add_argument( 'tags', metavar='T', nargs='+', help='EXIF tags.' )
+    GROUP = PARSER.add_mutually_exclusive_group()
+    GROUP.add_argument( '-hasdata', action='store_true', help='Has EXIF tags.' )
+    GROUP.add_argument( '-nodata', action='store_true', help='No EXIF tags.' )
     ARGS = PARSER.parse_args()
 
     print 'Scanning ' + ARGS.root 
     FILES = scan_exif_data( ARGS.root )
 
-    print 'Calculating stats.'
-    EXTS = set([ r['ext'] for r in FILES ])
-    print 'File\tData\tNoData'
-    for ext in EXTS:
-        has_data = 0
-        no_data = 0
-        for f in [ f for f in FILES if f['ext'] == ext ]:
-            if len( f['exif'] ) > 0:
-                has_data += 1
+    has_data = []
+    no_data = []
+    for f in FILES:
+        for tag in ARGS.tags:
+            if len( f['exif'] ) == 0:
+                no_data.append( f ) 
+            elif tag in f['exif'].keys():
+                has_data.append( f )
             else:
-                no_data += 1
-        print '%s\t%d\t%d' % (ext, has_data, no_data)
+                no_data.append( f ) 
+
+    print '%d files with specified tags, %d files without.' % (len(has_data),len(no_data))
+
+    if ARGS.hasdata == True:
+        FILES = has_data
+    elif ARGS.nodata == True:
+        FILES = no_data
 
     print 'Creating CSV report.'
-
     # Extract keys out of sub-dictionary.
     for f in FILES:
         for k in f['exif'].keys():
