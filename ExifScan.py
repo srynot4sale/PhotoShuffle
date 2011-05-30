@@ -37,12 +37,16 @@ def scan_exif_data( root ):
     return data 
 
 if __name__ == '__main__':
-    from sys import argv
+    from argparse import ArgumentParser
     from csv import DictWriter
-    # First arg is the root of directory tree.
-    ROOT = argv[1]
-    # Second arg is single EXIF column to include in CSV.
-    DATA = argv[2]
+
+    PARSER = ArgumentParser(description='Scan a fodler for files with EXIF data.')
+    PARSER.add_argument( 'root', metavar='R', help='Dir to scan.')
+    PARSER.add_argument( 'tags', metavar='T', nargs='+', help='List of EXIF tags' )
+    ARGS = PARSER.parse_args()
+
+    ROOT = ARGS.root
+    DATA = ARGS.tags
 
     print 'Scanning ' + ROOT 
     FILES = scan_exif_data( ROOT )
@@ -69,7 +73,7 @@ if __name__ == '__main__':
         del f['exif']
 
     HEADERS = ['path', 'name', 'ext' ]
-    HEADERS.append( DATA )
+    HEADERS = HEADERS + DATA 
     FILE = open('report.csv', 'wb')
     WRITER = DictWriter( FILE, HEADERS, extrasaction='ignore' )
     WRITER.writeheader()
