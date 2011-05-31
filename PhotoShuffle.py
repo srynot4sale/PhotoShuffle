@@ -4,7 +4,7 @@ if __name__ == '__main__':
     from os import makedirs, listdir, rmdir
     from os.path import join as joinpath, exists, getmtime  
     from datetime import datetime
-    from shutil import move
+    from shutil import move, copy2 as copy
     from ExifScan import scan_exif_data
     from argparse import ArgumentParser
     
@@ -12,6 +12,7 @@ if __name__ == '__main__':
     PARSER.add_argument( 'orig', metavar='O', help='Source directory.')
     PARSER.add_argument( 'dest', metavar='D', help='Destination directory' )
     PARSER.add_argument( '-filetime', action='store_true', help='Use file time if missing EXIF' )
+    PARSER.add_argument( '-copy', action='store_true', help='Copy files instead of moving.' )
     ARGS = PARSER.parse_args()
 
     print 'Gathering & processing EXIF data.'
@@ -59,9 +60,15 @@ if __name__ == '__main__':
         newfile = joinpath( r['newpath'], r['newname'] + r['ext'] )
         if not exists( r['newpath'] ):
             makedirs( r['newpath'] )
-        print origfile +' to '+ newfile
-        # move the file.
-        move( origfile, newfile )
+        if not exists( newfile ):
+            if ARGS.copy == False:
+                print 'Moving '+ origfile +' to '+ newfile
+                move( origfile, newfile )
+            else:
+                print 'Copying '+ origfile +' to '+ newfile
+                copy( origfile, newfile )
+        else:
+            print newfile +' already exists!'
 
     print 'Removing empty directories'
     DIRS = set( [ d['path'] for d in DATA ] )
