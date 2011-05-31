@@ -20,9 +20,6 @@ if __name__ == '__main__':
     # Get creation time from EXIF data.
     DATA = scan_exif_data( ARGS.orig )
 
-    # Remove any files without EXIF data from list.
-    DATA = [ f for f in DATA if len(f['exif']) > 0 ]
-
     # Process EXIF data.
     for r in DATA:
         info = r['exif']
