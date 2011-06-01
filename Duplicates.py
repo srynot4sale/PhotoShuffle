@@ -6,14 +6,14 @@ from md5 import md5
 
 def find_duplicates( rootdir ):
     """Find duplicate files in directory tree."""
-    unique = []
+    unique = set()
     duplicates = [] 
     for path, dirs, files in walk( rootdir ):
         for filename in files:
             filepath = joinpath( path, filename )
             filehash = md5( file( filepath ).read() ).hexdigest()
             if filehash not in unique:
-                unique.append( filehash )
+                unique.add( filehash )
             else:
                 duplicates.append( filepath )
     return duplicates
