@@ -1,6 +1,6 @@
 """Find duplicate files inside a directory tree."""
 
-from os import walk,remove
+from os import walk, remove
 from os.path import join as joinpath
 from md5 import md5
 
@@ -23,12 +23,13 @@ if __name__ == '__main__':
     
     PARSER = ArgumentParser( description='Finds duplicate files.' )
     PARSER.add_argument( 'root', metavar='R', help='Dir to search.' )
-    PARSER.add_argument( '-remove', action='store_true', help='Delete duplicates.' )
+    PARSER.add_argument( '-remove', action='store_true', 
+                         help='Delete duplicate files.' )
     ARGS = PARSER.parse_args()
 
     DUPS = find_duplicates( ARGS.root )
 
-    print '%d Duplicate files found:' % len(DUPS)
+    print '%d Duplicate files found.' % len(DUPS)
     for f in sorted(DUPS):
         if ARGS.remove == True:
             remove( f )
