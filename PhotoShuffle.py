@@ -67,12 +67,12 @@ if __name__ == '__main__':
         if not exists( r['newpath'] ):
             makedirs( r['newpath'] )
         if not exists( newfile ):
-            if ARGS.copy == False:
-                print 'Moving '+ origfile +' to '+ newfile
-                move( origfile, newfile )
-            else:
+            if ARGS.copy:
                 print 'Copying '+ origfile +' to '+ newfile
                 copy( origfile, newfile )
+            else:
+                print 'Moving '+ origfile +' to '+ newfile
+                move( origfile, newfile )
         else:
             print newfile +' already exists!'
 

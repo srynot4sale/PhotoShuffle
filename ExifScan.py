@@ -51,23 +51,23 @@ if __name__ == '__main__':
     print 'Scanning ' + ARGS.root 
     FILES = scan_exif_data( ARGS.root )
 
-    has_data = []
-    no_data = []
+    HAS_DATA = []
+    NO_DATA = []
     for f in FILES:
         for tag in ARGS.tags:
             if len( f['exif'] ) == 0:
-                no_data.append( f ) 
+                NO_DATA.append( f ) 
             elif tag in f['exif'].keys():
-                has_data.append( f )
+                HAS_DATA.append( f )
             else:
-                no_data.append( f ) 
+                NO_DATA.append( f ) 
 
-    print '%d files with specified tags, %d files without.' % (len(has_data),len(no_data))
+    print '%d files with specified tags, %d files without.' % (len(HAS_DATA), len(NO_DATA))
 
     if ARGS.hasdata == True:
-        FILES = has_data
+        FILES = HAS_DATA
     elif ARGS.nodata == True:
-        FILES = no_data
+        FILES = NO_DATA
 
     print 'Creating CSV report.'
     # Extract keys out of sub-dictionary.
