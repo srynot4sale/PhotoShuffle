@@ -9,8 +9,8 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     
     PARSER = ArgumentParser(description='Builds a date sorted tree of dirs/images.') 
-    PARSER.add_argument( 'orig', metavar='O', help='Source directory.')
-    PARSER.add_argument( 'dest', metavar='D', help='Destination directory' )
+    PARSER.add_argument( 'orig', metavar='O', help='Source root directory.')
+    PARSER.add_argument( 'dest', metavar='D', help='Destination root directory' )
     PARSER.add_argument( '-filetime', action='store_true', help='Use file time if missing EXIF' )
     PARSER.add_argument( '-copy', action='store_true', help='Copy files instead of moving.' )
     ARGS = PARSER.parse_args()
