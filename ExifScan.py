@@ -53,16 +53,17 @@ if __name__ == '__main__':
 
     HAS_DATA = []
     NO_DATA = []
-    for f in FILES:
-        for tag in ARGS.tags:
-            if len( f['exif'] ) == 0:
-                NO_DATA.append( f ) 
-            elif tag in f['exif'].keys():
-                HAS_DATA.append( f )
+    for FILE in FILES:
+        for TAG in ARGS.tags:
+            if len( FILE['exif'] ) == 0:
+                NO_DATA.append( FILE ) 
+            elif TAG in FILE['exif'].keys():
+                HAS_DATA.append( FILE )
             else:
-                NO_DATA.append( f ) 
+                NO_DATA.append( FILE ) 
 
-    print '%d files with specified tags, %d files without.' % (len(HAS_DATA), len(NO_DATA))
+    print '%d files with specified tags, %d files without.' % (len(HAS_DATA), 
+        len(NO_DATA))
 
     if ARGS.hasdata == True:
         FILES = HAS_DATA
