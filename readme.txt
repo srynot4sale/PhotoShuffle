@@ -4,7 +4,7 @@ An example of running this script to reoranise the photos folder and leave the o
     python PhotoShuffle.py -copy /Users/Daniel/Pictures /Users/Daniel/OrganisedPictures
 
 An example of running this script to reoranise the photos folder would be:
-    python PhotoShuffle.py -copy /Users/Daniel/Pictures /Users/Daniel/OrganisedPictures
+    python PhotoShuffle.py /Users/Daniel/Pictures /Users/Daniel/OrganisedPictures
 
 The ExifScan.py script can also be ran directly to scan and harvest EXIF data from image files in a directory tree and write a CSV formatted report for analysis.  For example to find the creation time for all files in the photos folder, run the following:
     python ExifScan.py DateTimeOriginal DateTime
