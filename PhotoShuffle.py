@@ -80,11 +80,12 @@ if __name__ == '__main__':
         else:
             print newfile +' already exists!'
 
-    print 'Removing empty directories'
-    DIRS = set( [ d['path'] for d in DATA ] )
-    for d in DIRS:
-        # if the directory is empty then delete it.
-        if len( listdir( d ) ) == 0:
-            print 'Deleting dir ' + d
-            rmdir( d )
+    if ARGS.copy:
+        print 'Removing empty directories'
+        DIRS = set( [ d['path'] for d in DATA ] )
+        for d in DIRS:
+            # if the directory is empty then delete it.
+            if len( listdir( d ) ) == 0:
+                print 'Deleting dir ' + d
+                rmdir( d )
 
