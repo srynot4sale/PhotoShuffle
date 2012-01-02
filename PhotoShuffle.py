@@ -8,11 +8,14 @@ if __name__ == '__main__':
     from ExifScan import scan_exif_data
     from argparse import ArgumentParser
     
-    PARSER = ArgumentParser(description='Builds a date sorted tree of dirs/images.') 
+    PARSER = ArgumentParser(description='Builds a date sorted tree of images.') 
     PARSER.add_argument( 'orig', metavar='O', help='Source root directory.')
-    PARSER.add_argument( 'dest', metavar='D', help='Destination root directory' )
-    PARSER.add_argument( '-filetime', action='store_true', help='Use file time if missing EXIF' )
-    PARSER.add_argument( '-copy', action='store_true', help='Copy files instead of moving.' )
+    PARSER.add_argument( 'dest', metavar='D', 
+                         help='Destination root directory' )
+    PARSER.add_argument( '-filetime', action='store_true', 
+                         help='Use file time if missing EXIF' )
+    PARSER.add_argument( '-copy', action='store_true', 
+                         help='Copy files instead of moving.' )
     ARGS = PARSER.parse_args()
 
     print 'Gathering & processing EXIF data.'
@@ -52,7 +55,8 @@ if __name__ == '__main__':
             newname = '%0*d_%s' % (pad, i+1, datestr)
             j = i+1 
             # if filename exists keep looking until it doesn't. Ugly!
-            while exists( joinpath( newdir, newname + files[i]['ext'] ) ) or newname in usednames:
+            while ( exists( joinpath( newdir, newname + files[i]['ext'] ) ) or 
+                newname in usednames ):
                 j += 1
                 jpad = max( pad, len( str( j ) ) )
                 newname = '%0*d_%s' % (jpad, j, datestr)
