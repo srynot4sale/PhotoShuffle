@@ -18,6 +18,9 @@ if __name__ == '__main__':
                          help='Copy files instead of moving.' )
     ARGS = PARSER.parse_args()
 
+    config_newpath = '%Y/%m';
+
+
     print 'Gathering & processing EXIF data.'
 
     # Get creation time from EXIF data.
@@ -42,7 +45,7 @@ if __name__ == '__main__':
 
     # Generate new path YYYY/MM/DD/ using EXIF date.
     for r in DATA:
-        r['newpath'] = joinpath( ARGS.dest, r['ftime'].strftime('%Y/%m/%d') )
+        r['newpath'] = joinpath( ARGS.dest, r['ftime'].strftime(config_newpath) )
 
     # Generate filenames per directory: 1 to n+1 (zero padded) with DDMMMYY.
     print 'Generating filenames.'
