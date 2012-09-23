@@ -39,6 +39,8 @@ if __name__ == '__main__':
         elif ARGS.filetime == True:
             ctime = getmtime( joinpath( r['path'], r['name'] + r['ext'] ))
             r['ftime'] = datetime.fromtimestamp( ctime )
+        else:
+            print 'No EXIF data available for %s' % (joinpath( r['path'], r['name'] + r['ext'] ))
 
     # Remove any files without datetime info.
     DATA = [ f for f in DATA if 'ftime' in f.keys() ]
