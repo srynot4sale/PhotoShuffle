@@ -20,6 +20,7 @@ if __name__ == '__main__':
     ARGS = PARSER.parse_args()
 
     config_newpath = '%Y/%m'
+    config_keepname = True
 
     print 'Gathering & processing EXIF data.'
 
@@ -57,8 +58,14 @@ if __name__ == '__main__':
         usednames = []
         for i in range( len(files) ):
             datestr = files[i]['ftime'].strftime('%d%b%Y')
-            newname = '%0*d_%s' % (pad, i+1, datestr)
-            j = i+1
+
+            if config_keepname:
+                newname = files[i]['name']
+                j = 0
+            else:
+                newname = '%0*d_%s' % (pad, i+1, datestr)
+                j = i + 1
+
             # if filename exists keep looking until it doesn't. Ugly!
             while ( exists( joinpath( newdir, newname + files[i]['ext'] ) ) or
                 newname in usednames ):
@@ -69,8 +76,12 @@ if __name__ == '__main__':
                     break
 
                 j += 1
-                jpad = max( pad, len( str( j ) ) )
-                newname = '%0*d_%s' % (jpad, j, datestr)
+
+                if config_keepname:
+                    newname = '%s_%d' % (newname, j)
+                else:
+                    jpad = max( pad, len( str( j ) ) )
+                    newname = '%0*d_%s' % (jpad, j, datestr)
 
             usednames.append( newname )
             files[i]['newname'] = newname
