@@ -7,6 +7,7 @@ if __name__ == '__main__':
     from shutil import move, copy2 as copy
     from ExifScan import scan_exif_data
     from argparse import ArgumentParser
+    import hashlib
 
     PARSER = ArgumentParser(description='Builds a date sorted tree of images.')
     PARSER.add_argument( 'orig', metavar='O', help='Source root directory.')
@@ -18,8 +19,7 @@ if __name__ == '__main__':
                          help='Copy files instead of moving.' )
     ARGS = PARSER.parse_args()
 
-    config_newpath = '%Y/%m';
-
+    config_newpath = '%Y/%m'
 
     print 'Gathering & processing EXIF data.'
 
@@ -62,9 +62,16 @@ if __name__ == '__main__':
             # if filename exists keep looking until it doesn't. Ugly!
             while ( exists( joinpath( newdir, newname + files[i]['ext'] ) ) or
                 newname in usednames ):
+                # Check if these are the same image
+                hash_old = hashlib.md5(file(joinpath( newdir, newname + files[i]['ext'] ), 'rb').read())
+                hash_new = hashlib.md5(file(joinpath( files[i]['path'], files[i]['name'] + files[i]['ext'] ), 'rb').read())
+                if hash_old.hexdigest() == hash_new.hexdigest():
+                    break
+
                 j += 1
                 jpad = max( pad, len( str( j ) ) )
                 newname = '%0*d_%s' % (jpad, j, datestr)
+
             usednames.append( newname )
             files[i]['newname'] = newname
 
