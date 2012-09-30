@@ -1,7 +1,7 @@
 """Scans a folder for files with EXIF data."""
 
-from os import walk 
-from os.path import splitext, join as joinpath 
+from os import walk
+from os.path import splitext, join as joinpath
 from PIL import Image
 from PIL.ExifTags import TAGS
 
