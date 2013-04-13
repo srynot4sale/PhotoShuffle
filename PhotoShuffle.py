@@ -10,13 +10,13 @@ if __name__ == '__main__':
     import hashlib
 
     PARSER = ArgumentParser(description='Builds a date sorted tree of images.')
-    PARSER.add_argument( 'orig', metavar='O', help='Source root directory.')
-    PARSER.add_argument( 'dest', metavar='D',
-                         help='Destination root directory' )
-    PARSER.add_argument( '-filetime', action='store_true',
-                         help='Use file time if missing EXIF' )
-    PARSER.add_argument( '-copy', action='store_true',
-                         help='Copy files instead of moving.' )
+    PARSER.add_argument('orig', metavar='O', help='Source root directory.')
+    PARSER.add_argument('dest', metavar='D',
+                         help='Destination root directory')
+    PARSER.add_argument('-filetime', action='store_true',
+                         help='Use file time if missing EXIF')
+    PARSER.add_argument('-copy', action='store_true',
+                         help='Copy files instead of moving.')
     ARGS = PARSER.parse_args()
 
     config_newpath = '%Y/%m'
